@@ -177,7 +177,7 @@ $podCidrDiscovered = Test-PodCIDR $podCIDR
 # if the podCIDR has not yet been assigned to this node, start the kubelet process to get the podCIDR, and then promptly kill it.
 if (-not $podCidrDiscovered)
 {
-    $argList = @("--hostname-override=$(hostname)","--pod-infra-container-image=kubeletwin/pause","--resolv-conf=""""", "--kubeconfig=c:\k\config")
+    $argList = @("--cgroups-per-qos=false --enforce-node-allocatable="" --hostname-override=$(hostname)","--pod-infra-container-image=kubeletwin/pause","--resolv-conf=""""", "--kubeconfig=c:\k\config")
 
     $process = Start-Process -FilePath c:\k\kubelet.exe -PassThru -ArgumentList $argList
 
