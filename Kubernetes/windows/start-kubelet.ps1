@@ -21,6 +21,12 @@ $vnicName = "vEthernet ($endpointName)"
 ipmo $WorkingDir\helper.psm1
 
 function
+Get-Hostname() {
+    # Was $(hostname), but this doesn't work in EC2
+    return $(& curl -UseBasicParsing http://169.254.169.254/latest/meta-data/local-hostname).Content
+}
+
+function
 Get-PodGateway($podCIDR)
 {
     # Current limitation of Platform to not use .1 ip, since it is reserved
@@ -37,7 +43,7 @@ Get-PodEndpointGateway($podCIDR)
 function
 Get-PodCIDR()
 {
-    $podCIDR=c:\k\kubectl.exe --kubeconfig=c:\k\config get nodes/$($(hostname).ToLower()) -o custom-columns=podCidr:.spec.podCIDR --no-headers
+    $podCIDR=c:\k\kubectl.exe --kubeconfig=c:\k\config get nodes/$($(Get-Hostname).ToLower()) -o custom-columns=podCidr:.spec.podCIDR --no-headers
     return $podCIDR
 }
 
@@ -177,7 +183,7 @@ $podCidrDiscovered = Test-PodCIDR $podCIDR
 # if the podCIDR has not yet been assigned to this node, start the kubelet process to get the podCIDR, and then promptly kill it.
 if (-not $podCidrDiscovered)
 {
-    $argList = @("--cgroups-per-qos=false --enforce-node-allocatable="" --hostname-override=$(hostname)","--pod-infra-container-image=kubeletwin/pause","--resolv-conf=""""", "--kubeconfig=c:\k\config")
+    $argList = @("--cgroups-per-qos=false --enforce-node-allocatable="" --hostname-override=$(Get-Hostname)","--pod-infra-container-image=kubeletwin/pause","--resolv-conf=""""", "--kubeconfig=c:\k\config")
 
     $process = Start-Process -FilePath c:\k\kubelet.exe -PassThru -ArgumentList $argList
 
@@ -224,7 +230,7 @@ Update-CNIConfig $podCIDR
 
 if ($IsolationType -ieq "process")
 {
-    c:\k\kubelet.exe --hostname-override=$(hostname) --v=6 `
+    c:\k\kubelet.exe --hostname-override=$(Get-Hostname) --v=6 `
         --pod-infra-container-image=kubeletwin/pause --resolv-conf="" `
         --allow-privileged=true --enable-debugging-handlers `
         --cluster-dns=$KubeDnsServiceIp --cluster-domain=cluster.local `
@@ -235,7 +241,7 @@ if ($IsolationType -ieq "process")
 }
 elseif ($IsolationType -ieq "hyperv")
 {
-    c:\k\kubelet.exe --hostname-override=$(hostname) --v=6 `
+    c:\k\kubelet.exe --hostname-override=$(Get-Hostname) --v=6 `
         --pod-infra-container-image=kubeletwin/pause --resolv-conf="" `
         --allow-privileged=true --enable-debugging-handlers `
         --cluster-dns=$KubeDnsServiceIp --cluster-domain=cluster.local `
