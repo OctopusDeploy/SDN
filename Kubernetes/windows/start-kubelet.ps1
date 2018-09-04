@@ -174,7 +174,7 @@ Update-CNIConfig($podCIDR)
 function
 Test-PodCIDR($podCIDR)
 {
-    return $podCIDR.length -gt 0
+    return $podCIDR.length -gt 0 -and $podCIDR -ne "<none>"
 }
 
 $podCIDR = Get-PodCIDR
